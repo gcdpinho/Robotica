@@ -28,7 +28,7 @@ public class AStar {
 		this.initial = new Node(xInital, yInitial); // 
 		//this.goal = new Node(xGoal, yGoal);
 		this.length = length;
-		this.direc = "";
+		this.direc = "frente";
 		this.direita = direita;
 		this.esquerda = esquerda;
 
@@ -66,7 +66,7 @@ public class AStar {
 			if (getDistance() >= this.length && currentY+1 <= this.mapSize && !this.direc.equals("tras")){ 
 				this.map[currentX][currentY+1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY+1]);
-				this.direc = "frente";
+				//this.direc = "frente";
 			}
 			else
 				try {
@@ -80,7 +80,7 @@ public class AStar {
 			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
 				this.map[currentX-1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX-1][currentY]);
-				this.direc = "esquerda";
+				//this.direc = "esquerda";
 			}
 			else
 				try {
@@ -96,7 +96,7 @@ public class AStar {
 			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
 				this.map[currentX][currentY-1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY-1]);
-				this.direc = "tras";
+				//this.direc = "tras";
 			}
 			else
 				try {
@@ -112,7 +112,7 @@ public class AStar {
 			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
 				this.map[currentX+1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX+1][currentY]);
-				this.direc = "direita";
+				//this.direc = "direita";
 			}
 			else
 				try {
@@ -124,7 +124,7 @@ public class AStar {
 				
 			
 			// vira pra frente novamente
-			//this.turn(2200, 2);
+			this.turnOn(esquerda, 2);
 			
 			// calcula o custo de todos os nodos da lista para a posição do atual do robo
 			
@@ -271,7 +271,7 @@ public class AStar {
     			}
     			break;
     	}
-
+    	this.direc = goal
     	this.kalman.filtroKalman();
     	
 	}
