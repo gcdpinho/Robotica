@@ -76,7 +76,7 @@ public class AStar {
 					}
 			//esquerda
 			this.turnOn(this.esquerda, 2);
-			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
+			if (getDistance() >= this.length && currentX-1 >= 0 && !this.direc.equals("direita")){
 				this.map[currentX-1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX-1][currentY]);
 				//this.direc = "esquerda";
@@ -106,7 +106,7 @@ public class AStar {
 					}
 			// direita
 			this.turnOn(esquerda, 2);
-			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
+			if (getDistance() >= this.length && currentX+1 <= this.mapSize && !this.direc.equals("esquerda")){
 				this.map[currentX+1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX+1][currentY]);
 				//this.direc = "direita";
@@ -127,10 +127,8 @@ public class AStar {
 			for (int i=0; i<this.openNodes.size(); i++)
 				this.openNodes.get(i).setCost(currentX, currentY);	
 	
-			// vai para o nodo com menor distância
-			
+			// pega o nodo com menor distância	
 			int temp = getBestNode();
-
 			// calcula o caminho para esse nodo e vai até ele
 			this.calculatePath(current, openNodes.get(temp));
 			// nodo atual passa a ser o destino
