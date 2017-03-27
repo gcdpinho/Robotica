@@ -8,7 +8,7 @@ import lejos.nxt.*;
 
 public class AStar {
 
-	private int mapSize;
+	private int mapSize, direita, esquerda;
 	private double dist, length;
 	private Kalman kalman;
 	private static final int OBSTACLE = 1;
@@ -17,24 +17,26 @@ public class AStar {
 	private String direc;
 	//private static final int GOAL = 2;
 	private Node[][] map;
-	private Node initial, goal;
+	private Node initial;
 	private ArrayList<Node> openNodes;
 	
 	
-	public AStar(int mapSize, int xInital, int yInitial, /*int xGoal, int yGoal,*/ double length, Kalman kalman){
-		this.mapSize = mapSize;
-		this.kalman = kalman;
-		this.map = new Node[this.mapSize][this.mapSize];
-		this.initial = new Node(xInital, yInitial);
+	public AStar(int mapSize, int xInital, int yInitial, /*int xGoal, int yGoal,*/ double length, Kalman kalman, int direita, int esquerda){
+		this.mapSize = mapSize; // tamaho do mapa
+		this.kalman = kalman; // kalman (andar x centimetros)
+		this.map = new Node[this.mapSize][this.mapSize]; // tabuleiro
+		this.initial = new Node(xInital, yInitial); // 
 		//this.goal = new Node(xGoal, yGoal);
 		this.length = length;
 		this.direc = "";
+		this.direita = direita;
+		this.esquerda = esquerda;
 
 		for (int i=0; i<this.mapSize; i++)
 			for (int j=0; j<this.mapSize; j++)
 				this.map[i][j] = new Node(i, j);
 		
-		this.map[xInital][yInitial].setValue(POSROBOT);
+		this.map[xInital][yInitial].setValue(POSROBOT); // posição inicial
 		//this.map[xGoal][yGoal].setIsGoal(true);
 		
 		this.openNodes = new ArrayList<>();
@@ -45,8 +47,8 @@ public class AStar {
 		int currentY = this.initial.getY();
 			
 		// Medi distancia em linha reta do alvo
-		this.dist = this.getDistance();
-		this.map[currentX][(int) (this.dist/this.length)].setIsGoal(true);;
+		this.dist = this.getDistance(); // distancia do alvo em linha reta
+		this.map[currentX][(int) (this.dist/this.length)].setIsGoal(true); //mapeando a casa do alvo no tabuleiro
 		
 		Button.waitForAnyPress();
 		
@@ -59,8 +61,9 @@ public class AStar {
 
 		Node current = this.map[currentX][currentY];
 		while (!current.getIsGoal()){
+			//busca por nodos abertos, verificando se o ultimo movimento (para não retornar)
 			// frente
-			if (getDistance() >= this.length && currentY+1 <= this.mapSize && !this.direc.equals("tras")){ // tem espaço
+			if (getDistance() >= this.length && currentY+1 <= this.mapSize && !this.direc.equals("tras")){ 
 				this.map[currentX][currentY+1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY+1]);
 				this.direc = "frente";
@@ -73,7 +76,7 @@ public class AStar {
 					System.out.println("Fora do map.");
 				}
 			//esquerda
-			this.turn(2200, 2);
+			this.turnOn(this.esquerda, 2);
 			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
 				this.map[currentX-1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX-1][currentY]);
@@ -89,7 +92,7 @@ public class AStar {
 				
 			
 			// tras
-			this.turn(2200, 2);
+			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
 				this.map[currentX][currentY-1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY-1]);
@@ -105,7 +108,7 @@ public class AStar {
 				
 			
 			// direita
-			this.turn(2200, 2);
+			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
 				this.map[currentX+1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX+1][currentY]);
@@ -170,26 +173,26 @@ public class AStar {
 		
 		// frente
 		if (currentY - goalY > 0){
-			this.turn(this.direc, "frente");
-			this.kalman.filtroKalman();
+			this.turnAndGo(this.direc, "frente");
+			//this.kalman.filtroKalman();
 		}
 		// tras
 		else
 			if (currentY - goalY < 0){
-				this.turn(this.direc, "tras");
-				this.kalman.filtroKalman();
+				this.turnAndGo(this.direc, "tras");
+				//this.kalman.filtroKalman();
 			}
 			// direita
 			else
 				if (currentX - goalX > 0){
-					this.turn(this.direc, "direita");
-					this.kalman.filtroKalman();
+					this.turnAndGo(this.direc, "direita");
+					//this.kalman.filtroKalman();
 				}
 				// esquerda
 				else 
 					if (currentX - goalX < 0){
-						this.turn(this.direc, "esquerda");
-						this.kalman.filtroKalman();
+						this.turnAndGo(this.direc, "esquerda");
+						//this.kalman.filtroKalman();
 					}
 		this.map[goalX][goalY].setPath(this.map[currentX][currentY]);
 					
@@ -201,9 +204,7 @@ public class AStar {
 		return ultrasom.getDistance();
 	}
 	
-	private void turn(String current, String goal){
-		String esquerda = 2200;
-		String direita = 2200;
+	private void turnAndGo(String current, String goal){
 
     	Motor.B.setSpeed(200);
     	Motor.C.setSpeed(200);
@@ -214,56 +215,56 @@ public class AStar {
     				case "frente":
     					break;
     				case "tras":
-    					this.turnOn(esquerda*2, 2);
+    					this.turnOn(this.esquerda*2, 2);
     					break;
     				case "esquerda":
-    					this.turnOn(esquerda, 2);
+    					this.turnOn(this.esquerda, 2);
     					break;
     				case "direita":
-    					this.turnOn(direita, 1);
+    					this.turnOn(this.direita, 1);
     					break;
     			}
     			break;
     		case "tras":
     			switch(goal){
     				case "frente":
-    					this.turnOn(direita*2, 1);
+    					this.turnOn(this.direita*2, 1);
     					break;
     				case "tras":	
     					break;
     				case "esquerda":
-    					this.turnOn(direita, 1);
+    					this.turnOn(this.direita, 1);
     					break;
     				case "direita":
-    					this.turnOn(esquerda, 2);
+    					this.turnOn(this.esquerda, 2);
     					break;
     			}
     			break;
     		case "esquerda":
     			switch(goal){
     				case "frente":
-    					this.turnOn(direita, 1);
+    					this.turnOn(this.direita, 1);
     					break;
     				case "tras":
-    					this.turnOn(esquerda, 1);	
+    					this.turnOn(this.esquerda, 1);	
     					break;
     				case "esquerda":
     					break;
     				case "direita":
-    					this.turnOn(esquerda*2, 2);
+    					this.turnOn(this.esquerda*2, 2);
     					break;
     			}
     			break;
     		case "direita":
     			switch(goal){
     				case "frente":
-    					this.turnOn(esquerda, 2);
+    					this.turnOn(this.esquerda, 2);
     					break;
     				case "tras":
-    					this.turnOn(direita, 1);	
+    					this.turnOn(this.direita, 1);	
     					break;
     				case "esquerda":
-    					this.turnOn(direita*2, 1);
+    					this.turnOn(this.direita*2, 1);
     					break;
     				case "direita":
     					break;
@@ -271,7 +272,7 @@ public class AStar {
     			break;
     	}
 
-    
+    	this.kalman.filtroKalman();
     	
 	}
 	
