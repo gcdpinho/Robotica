@@ -53,17 +53,8 @@ public class Kalman {
 	    Motor.B.stop();
 	    Motor.C.stop();
 	    
-	    System.out.println("Odometro:"+medOdometro);
-	    System.out.println("Ultrassom:"+medUltrassom);
+	    //System.out.println("Odometro:"+medOdometro);
+	    //System.out.println("Ultrassom:"+medUltrassom);
 	}
-	//KALMAN W = V²2/(V²1+V²2)
-
-	 	/*pos = medicao odometro*w + (1-w)*medicao ultrasom*/
-	/*
-	double v1 = 0.587644, v2 = 0.536655, w, pos = 0, init, roda = 13.2, distance, value;
-	int color, count = 0, anterior = 7;
-	
-	w = v2/(v1+v2);
-	*/
 	
 }
