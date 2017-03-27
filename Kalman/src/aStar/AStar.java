@@ -54,9 +54,9 @@ public class AStar {
 		// Adiciona os nodos FREEPASS na lista de nodos abertos
 		// Calcula a distancia euclidiana em relaçã ao alvo
 		
-		//colocar try catch nos else (current + 1 pode ser fora do tabuleiro)
-		// multiplicar o custo pelo lenght
-		
+		//colocar try catch nos else (current + 1 pode ser fora do tabuleiro) V
+		// multiplicar o custo pelo lenght V
+
 		Node current = this.map[currentX][currentY];
 		while (!current.getIsGoal()){
 			// frente
@@ -66,8 +66,12 @@ public class AStar {
 				this.direc = "frente";
 			}
 			else
-				this.map[currentX][currentY+1].setValue(OBSTACLE);
-			
+				try {
+					this.map[currentX][currentY+1].setValue(OBSTACLE);
+				}
+				catch (Exception e){
+					System.out.println("Fora do map.");
+				}
 			//esquerda
 			this.turn(2200, 2);
 			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
@@ -76,7 +80,13 @@ public class AStar {
 				this.direc = "esquerda";
 			}
 			else
-				this.map[currentX-1][currentY].setValue(OBSTACLE);
+				try {
+					this.map[currentX-1][currentY].setValue(OBSTACLE);
+				}
+				catch (Exception e){
+					System.out.println("Fora do map.");
+				}
+				
 			
 			// tras
 			this.turn(2200, 2);
@@ -86,7 +96,13 @@ public class AStar {
 				this.direc = "tras";
 			}
 			else
-				this.map[currentX][currentY-1].setValue(OBSTACLE);
+				try {
+					this.map[currentX][currentY-1].setValue(OBSTACLE);
+				}
+				catch (Exception e){
+					System.out.println("Fora do map.");
+				}
+				
 			
 			// direita
 			this.turn(2200, 2);
@@ -96,7 +112,13 @@ public class AStar {
 				this.direc = "direita";
 			}
 			else
-				this.map[currentX+1][currentY].setValue(OBSTACLE);
+				try {
+					this.map[currentX+1][currentY].setValue(OBSTACLE);
+				}
+				catch (Exception e){
+					System.out.println("Fora do map.");
+				}
+				
 			
 			// vira pra frente novamente
 			//this.turn(2200, 2);
@@ -267,17 +289,17 @@ public class AStar {
 
 	private int getBestNode(){
 		ArrayList<Integer> resultIndex = new ArrayList<>();
-		double result = this.openNodes.get(0).getCost() + this.openNodes.get(0).getDist();
+		double result = this.openNodes.get(0).getCost() * this.length + this.openNodes.get(0).getDist();
 		double aux;
 		
 		for (int i=1; i<this.openNodes.size(); i++){
-			aux = this.openNodes.get(i).getCost() + this.openNodes.get(i).getDist();
+			aux = this.openNodes.get(i).getCost() * this.length + this.openNodes.get(i).getDist();
 			if (result > aux)
 				result = aux;				
 		}
 		
 		for (int i=0; i<this.openNodes.size(); i++){
-			if (result == this.openNodes.get(i).getCost() + this.openNodes.get(i).getDist())
+			if (result == this.openNodes.get(i).getCost() * this.length + this.openNodes.get(i).getDist())
 				resultIndex.add(i);
 		}
 		
