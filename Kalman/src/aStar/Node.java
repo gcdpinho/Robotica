@@ -39,8 +39,10 @@ public class Node {
 	}
 	
 	public void setPath(Node node){
-		this.path.addAll(node.getPath());
-		this.path.add(node);
+		if (!this.path.size().isEmpty()){
+			this.path.addAll(node.getPath());
+			this.path.add(node);
+		}
 	}
 	
 	public double getCost(){

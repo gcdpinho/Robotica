@@ -25,18 +25,18 @@ public class AStar {
 		this.mapSize = mapSize; // tamaho do mapa
 		this.kalman = kalman; // kalman (andar x centimetros)
 		this.map = new Node[this.mapSize][this.mapSize]; // tabuleiro
-		this.initial = new Node(xInital, yInitial); // 
+		this.initial = new Node(xInital, yInitial); // nodo inicial
 		//this.goal = new Node(xGoal, yGoal);
-		this.length = length;
-		this.direc = "frente";
-		this.direita = direita;
-		this.esquerda = esquerda;
+		this.length = length; // tamanho do quadrado
+		this.direc = "frente"; // direção inicial
+		this.direita = direita; // angulo necessario pra virar a direita
+		this.esquerda = esquerda; // angulo necessario pra virar a esquerda
 
 		for (int i=0; i<this.mapSize; i++)
 			for (int j=0; j<this.mapSize; j++)
 				this.map[i][j] = new Node(i, j);
 		
-		this.map[xInital][yInitial].setValue(POSROBOT); // posição inicial
+		this.map[xInital][yInitial].setValue(POSROBOT); // posição inicial no tabuleiro
 		//this.map[xGoal][yGoal].setIsGoal(true);
 		
 		this.openNodes = new ArrayList<>();
@@ -46,6 +46,7 @@ public class AStar {
 		int currentX = this.initial.getX(); 
 		int currentY = this.initial.getY();
 			
+		this.map[currenX][currentY].setPath(this.initial);
 		// Medi distancia em linha reta do alvo
 		this.dist = this.getDistance(); // distancia do alvo em linha reta
 		this.map[currentX][(int) (this.dist/this.length)].setIsGoal(true); //mapeando a casa do alvo no tabuleiro
@@ -53,15 +54,16 @@ public class AStar {
 		Button.waitForAnyPress();
 		
 		// Gira para todos os lados e ve os obstaculos
-		// Adiciona os nodos FREEPASS na lista de nodos abertos
-		// Calcula a distancia euclidiana em relaçã ao alvo
+		// Adiciona os nodos FREEPASS vizinhos na lista de nodos abertos
+		// Calcula a distancia euclidiana em relação ao alvo
 		
+		// Problemas:
 		//colocar try catch nos else (current + 1 pode ser fora do tabuleiro) V
 		// multiplicar o custo pelo lenght V
 
 		Node current = this.map[currentX][currentY];
 		while (!current.getIsGoal()){
-			//busca por nodos abertos, verificando se o ultimo movimento (para não retornar)
+			//busca por nodos abertos, verificando o ultimo movimento (para não retornar)
 			// frente
 			if (getDistance() >= this.length && currentY+1 <= this.mapSize && !this.direc.equals("tras")){ 
 				this.map[currentX][currentY+1].setDist(goal);
@@ -89,8 +91,6 @@ public class AStar {
 				catch (Exception e){
 					System.out.println("Fora do map.");
 				}
-				
-			
 			// tras
 			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
@@ -105,8 +105,6 @@ public class AStar {
 				catch (Exception e){
 					System.out.println("Fora do map.");
 				}
-				
-			
 			// direita
 			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
@@ -121,22 +119,23 @@ public class AStar {
 				catch (Exception e){
 					System.out.println("Fora do map.");
 				}
-				
 			
 			// vira pra frente novamente
 			this.turnOn(esquerda, 2);
 			
-			// calcula o custo de todos os nodos da lista para a posição do atual do robo
-			
+			// calcula o custo de todos os nodos da lista para a posição atual do robo
 			for (int i=0; i<this.openNodes.size(); i++)
 				this.openNodes.get(i).setCost(currentX, currentY);	
 	
 			// vai para o nodo com menor distância
 			
 			int temp = getBestNode();
+
+			// calcula o caminho para esse nodo e vai até ele
 			this.calculatePath(current, openNodes.get(temp));
+			// nodo atual passa a ser o destino
 			current = openNodes.get(temp);
-			
+			// remove esse nodo da lista
 			this.openNodes.remove(temp);
 		
 		// repete até chegar no alvo
@@ -293,12 +292,14 @@ public class AStar {
 		double result = this.openNodes.get(0).getCost() * this.length + this.openNodes.get(0).getDist();
 		double aux;
 		
+		// pega o nodo com menor custo
 		for (int i=1; i<this.openNodes.size(); i++){
 			aux = this.openNodes.get(i).getCost() * this.length + this.openNodes.get(i).getDist();
 			if (result > aux)
 				result = aux;				
 		}
 		
+		// se tiver nodos com custos iguais retorna um randomicamente
 		for (int i=0; i<this.openNodes.size(); i++){
 			if (result == this.openNodes.get(i).getCost() * this.length + this.openNodes.get(i).getDist())
 				resultIndex.add(i);
