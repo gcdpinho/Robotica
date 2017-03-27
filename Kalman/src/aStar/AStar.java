@@ -14,6 +14,7 @@ public class AStar {
 	private static final int OBSTACLE = 1;
 	private static final int FREEPASS = 0;
 	private static final int POSROBOT = 10;
+	private String direc;
 	//private static final int GOAL = 2;
 	private Node[][] map;
 	private Node initial, goal;
@@ -27,7 +28,8 @@ public class AStar {
 		this.initial = new Node(xInital, yInitial);
 		//this.goal = new Node(xGoal, yGoal);
 		this.length = length;
-		
+		this.direc = "";
+
 		for (int i=0; i<this.mapSize; i++)
 			for (int j=0; j<this.mapSize; j++)
 				this.map[i][j] = new Node(i, j);
@@ -53,46 +55,51 @@ public class AStar {
 		// Calcula a distancia euclidiana em relaçã ao alvo
 		
 		//colocar try catch nos else (current + 1 pode ser fora do tabuleiro)
+		// multiplicar o custo pelo lenght
 		
 		Node current = this.map[currentX][currentY];
 		while (!current.getIsGoal()){
 			// frente
-			if (getDistance() >= this.length && currentY+1 <= this.mapSize){ // tem espaço
+			if (getDistance() >= this.length && currentY+1 <= this.mapSize && !this.direc.equals("tras")){ // tem espaço
 				this.map[currentX][currentY+1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY+1]);
+				this.direc = "frente";
 			}
 			else
 				this.map[currentX][currentY+1].setValue(OBSTACLE);
 			
 			//esquerda
 			this.turn(2200, 2);
-			if (getDistance() >= this.length && currentX-1 >= 0){
+			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
 				this.map[currentX-1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX-1][currentY]);
+				this.direc = "esquerda";
 			}
 			else
 				this.map[currentX-1][currentY].setValue(OBSTACLE);
 			
 			// tras
 			this.turn(2200, 2);
-			if (getDistance() >= this.length && currentY-1 >= 0){
+			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
 				this.map[currentX][currentY-1].setDist(goal);
 				this.openNodes.add(this.map[currentX][currentY-1]);
+				this.direc = "tras";
 			}
 			else
 				this.map[currentX][currentY-1].setValue(OBSTACLE);
 			
 			// direita
 			this.turn(2200, 2);
-			if (getDistance() >= this.length && currentX+1 <= this.mapSize){
+			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
 				this.map[currentX+1][currentY].setDist(goal);
 				this.openNodes.add(this.map[currentX+1][currentY]);
+				this.direc = "direita";
 			}
 			else
 				this.map[currentX+1][currentY].setValue(OBSTACLE);
 			
 			// vira pra frente novamente
-			this.turn(2200, 2);
+			//this.turn(2200, 2);
 			
 			// calcula o custo de todos os nodos da lista para a posição do atual do robo
 			
@@ -117,14 +124,18 @@ public class AStar {
 		int currentY= current.getY();
 		int goalX = goal.getX();
 		int goalY = goal.getY();
-		
+		int prox;
+
 		if (currentX - goalX == 0 && (currentY - goalY <= 1 && currentY - goalY >= -1))
 			this.walk(current, goal);
 		else
 			if (currentY - goalY == 0 && (currentX - goalX <= 1 && currentX - goalX >= -1))
 				this.walk(current, goal);
-			else
-				calculatePath(current.getPath().get(current.getPath().size()-1), goal);
+			else {
+				prox = current.getPath().get(current.getPath().size()-1);
+				this.wal(current, prox)
+				this.calculatePath(prox, goal);
+			}
 	}
 	
 	
@@ -136,24 +147,26 @@ public class AStar {
 		
 		
 		// frente
-		if (currentY - goalY > 0)
-				this.kalman.filtroKalman();
+		if (currentY - goalY > 0){
+			this.turn(this.direc, "frente");
+			this.kalman.filtroKalman();
+		}
 		// tras
 		else
 			if (currentY - goalY < 0){
-				this.turn(2200 * 2, 2);
+				this.turn(this.direc, "tras");
 				this.kalman.filtroKalman();
 			}
 			// direita
 			else
 				if (currentX - goalX > 0){
-					this.turn(2200, 1);
+					this.turn(this.direc, "direita");
 					this.kalman.filtroKalman();
 				}
 				// esquerda
 				else 
 					if (currentX - goalX < 0){
-						this.turn(2200, 2);
+						this.turn(this.direc, "esquerda");
 						this.kalman.filtroKalman();
 					}
 		this.map[goalX][goalY].setPath(this.map[currentX][currentY]);
@@ -166,12 +179,83 @@ public class AStar {
 		return ultrasom.getDistance();
 	}
 	
-	private void turn(int degrees, int direction){
-		
+	private void turn(String current, String goal){
+		String esquerda = 2200;
+		String direita = 2200;
+
     	Motor.B.setSpeed(200);
     	Motor.C.setSpeed(200);
 
-    	if (direction == 1) { // Direita
+    	switch(current){
+    		case "frente":
+    			switch(goal){
+    				case "frente":
+    					break;
+    				case "tras":
+    					this.turnOn(esquerda*2, 2);
+    					break;
+    				case "esquerda":
+    					this.turnOn(esquerda, 2);
+    					break;
+    				case "direita":
+    					this.turnOn(direita, 1);
+    					break;
+    			}
+    			break;
+    		case "tras":
+    			switch(goal){
+    				case "frente":
+    					this.turnOn(direita*2, 1);
+    					break;
+    				case "tras":	
+    					break;
+    				case "esquerda":
+    					this.turnOn(direita, 1);
+    					break;
+    				case "direita":
+    					this.turnOn(esquerda, 2);
+    					break;
+    			}
+    			break;
+    		case "esquerda":
+    			switch(goal){
+    				case "frente":
+    					this.turnOn(direita, 1);
+    					break;
+    				case "tras":
+    					this.turnOn(esquerda, 1);	
+    					break;
+    				case "esquerda":
+    					break;
+    				case "direita":
+    					this.turnOn(esquerda*2, 2);
+    					break;
+    			}
+    			break;
+    		case "direita":
+    			switch(goal){
+    				case "frente":
+    					this.turnOn(esquerda, 2);
+    					break;
+    				case "tras":
+    					this.turnOn(direita, 1);	
+    					break;
+    				case "esquerda":
+    					this.turnOn(direita*2, 1);
+    					break;
+    				case "direita":
+    					break;
+    			}
+    			break;
+    	}
+
+    
+    	
+	}
+	
+	private void turnOn (int degress, int direction){
+
+		if (direction == 1) { // Direita
     		Motor.B.rotate( degrees, true);
     		Motor.C.rotate( -degrees, true);
     	}
@@ -179,9 +263,8 @@ public class AStar {
     		Motor.B.rotate( -degrees, true);
     		Motor.C.rotate( degrees, true);
     	}
-    	
 	}
-	
+
 	private int getBestNode(){
 		ArrayList<Integer> resultIndex = new ArrayList<>();
 		double result = this.openNodes.get(0).getCost() + this.openNodes.get(0).getDist();
