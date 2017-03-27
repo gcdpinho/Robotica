@@ -57,7 +57,7 @@ public class Main {
     	
     	Kalman kalman = new Kalman(0.9017, 0.1972, 23);
         // arrumar valores de direita e esquerda (2200, 2200)
-    	AStar aStar = new AStar(25, 13, 13, 23, kalman, 2200, 2200);
+    	AStar aStar = new AStar(5, 3, 3, 23, kalman, 2200, 2200);
     	
     	aStar.run();
     	

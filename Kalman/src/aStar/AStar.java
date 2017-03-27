@@ -56,10 +56,6 @@ public class AStar {
 		// Gira para todos os lados e ve os obstaculos
 		// Adiciona os nodos FREEPASS vizinhos na lista de nodos abertos
 		// Calcula a distancia euclidiana em relação ao alvo
-		
-		// Problemas:
-		//colocar try catch nos else (current + 1 pode ser fora do tabuleiro) V
-		// multiplicar o custo pelo lenght V
 
 		Node current = this.map[currentX][currentY];
 		while (!current.getIsGoal()){
@@ -71,12 +67,13 @@ public class AStar {
 				//this.direc = "frente";
 			}
 			else
-				try {
-					this.map[currentX][currentY+1].setValue(OBSTACLE);
-				}
-				catch (Exception e){
-					System.out.println("Fora do map.");
-				}
+				if (!this.direc.equals("tras"))
+					try {
+						this.map[currentX][currentY+1].setValue(OBSTACLE);
+					}
+					catch (Exception e){
+						System.out.println("Fora do map.");
+					}
 			//esquerda
 			this.turnOn(this.esquerda, 2);
 			if (getDistance() >= this.length && currentX-1 >= 0) && !this.direc.equals("direita"){
@@ -85,12 +82,13 @@ public class AStar {
 				//this.direc = "esquerda";
 			}
 			else
-				try {
-					this.map[currentX-1][currentY].setValue(OBSTACLE);
-				}
-				catch (Exception e){
-					System.out.println("Fora do map.");
-				}
+				if (!this.direc.equals("direita"))
+					try {
+						this.map[currentX-1][currentY].setValue(OBSTACLE);
+					}
+					catch (Exception e){
+						System.out.println("Fora do map.");
+					}
 			// tras
 			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
@@ -99,12 +97,13 @@ public class AStar {
 				//this.direc = "tras";
 			}
 			else
-				try {
-					this.map[currentX][currentY-1].setValue(OBSTACLE);
-				}
-				catch (Exception e){
-					System.out.println("Fora do map.");
-				}
+				if (!this.direc.equals("frente"))
+					try {
+						this.map[currentX][currentY-1].setValue(OBSTACLE);
+					}
+					catch (Exception e){
+						System.out.println("Fora do map.");
+					}
 			// direita
 			this.turnOn(esquerda, 2);
 			if (getDistance() >= this.length && currentX+1 <= this.mapSize !this.direc.equals("esquerda")){
@@ -113,12 +112,13 @@ public class AStar {
 				//this.direc = "direita";
 			}
 			else
-				try {
-					this.map[currentX+1][currentY].setValue(OBSTACLE);
-				}
-				catch (Exception e){
-					System.out.println("Fora do map.");
-				}
+				if (!this.direc.equals("direita"))
+					try {
+						this.map[currentX+1][currentY].setValue(OBSTACLE);
+					}
+					catch (Exception e){
+						System.out.println("Fora do map.");
+					}
 			
 			// vira pra frente novamente
 			this.turnOn(esquerda, 2);
@@ -143,6 +143,7 @@ public class AStar {
 		
 	}
 	
+	// caso o proximo nodo não for vizinho ele retorna o caminho até que seja vizinho de algum nodo (recursivamente).
 	private void calculatePath(Node current, Node goal){
 		int currentX = current.getX();
 		int currentY= current.getY();
@@ -207,6 +208,8 @@ public class AStar {
 
     	Motor.B.setSpeed(200);
     	Motor.C.setSpeed(200);
+
+    	// verifica a direção atual e para qual direção deve ir
 
     	switch(current){
     		case "frente":
