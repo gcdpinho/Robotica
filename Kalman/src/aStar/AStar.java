@@ -135,6 +135,8 @@ public class AStar {
 			current = openNodes.get(temp);
 			// remove esse nodo da lista
 			this.openNodes.remove(temp);
+			// vira pra frente de novo
+			turnAndGo(this.direc, "frente", false);
 		
 		// repete até chegar no alvo
 		}
@@ -171,25 +173,25 @@ public class AStar {
 		
 		// frente
 		if (currentY - goalY > 0){
-			this.turnAndGo(this.direc, "frente");
+			this.turnAndGo(this.direc, "frente", true);
 			//this.kalman.filtroKalman();
 		}
 		// tras
 		else
 			if (currentY - goalY < 0){
-				this.turnAndGo(this.direc, "tras");
+				this.turnAndGo(this.direc, "tras". true);
 				//this.kalman.filtroKalman();
 			}
 			// direita
 			else
 				if (currentX - goalX > 0){
-					this.turnAndGo(this.direc, "direita");
+					this.turnAndGo(this.direc, "direita", true);
 					//this.kalman.filtroKalman();
 				}
 				// esquerda
 				else 
 					if (currentX - goalX < 0){
-						this.turnAndGo(this.direc, "esquerda");
+						this.turnAndGo(this.direc, "esquerda", true);
 						//this.kalman.filtroKalman();
 					}
 		this.map[goalX][goalY].setPath(this.map[currentX][currentY]);
@@ -202,7 +204,7 @@ public class AStar {
 		return ultrasom.getDistance();
 	}
 	
-	private void turnAndGo(String current, String goal){
+	private void turnAndGo(String current, String goal, boolean go){
 
     	Motor.B.setSpeed(200);
     	Motor.C.setSpeed(200);
@@ -272,7 +274,8 @@ public class AStar {
     			break;
     	}
     	this.direc = goal
-    	this.kalman.filtroKalman();
+    	if (go)
+    		this.kalman.filtroKalman();
     	
 	}
 	
