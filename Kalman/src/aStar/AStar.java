@@ -45,11 +45,13 @@ public class AStar {
 	public void run(){
 		int currentX = this.initial.getX(); 
 		int currentY = this.initial.getY();
-			
-		this.map[currenX][currentY].setPath(this.initial);
+		Node goal;
+		
+		this.map[currentX][currentY].setPath(this.initial);
 		// Medi distancia em linha reta do alvo
 		this.dist = this.getDistance(); // distancia do alvo em linha reta
-		this.map[currentX][(int) (this.dist/this.length)].setIsGoal(true); //mapeando a casa do alvo no tabuleiro
+		goal = this.map[currentX][(int) (this.dist/this.length)];
+		goal.setIsGoal(true); //mapeando a casa do alvo no tabuleiro
 		
 		Button.waitForAnyPress();
 		
@@ -151,7 +153,7 @@ public class AStar {
 		int currentY= current.getY();
 		int goalX = goal.getX();
 		int goalY = goal.getY();
-		int prox;
+		Node prox;
 
 		if (currentX - goalX == 0 && (currentY - goalY <= 1 && currentY - goalY >= -1))
 			this.walk(current, goal);
@@ -160,7 +162,7 @@ public class AStar {
 				this.walk(current, goal);
 			else {
 				prox = current.getPath().get(current.getPath().size()-1);
-				this.wal(current, prox)
+				this.walk(current, prox);
 				this.calculatePath(prox, goal);
 			}
 	}
@@ -181,7 +183,7 @@ public class AStar {
 		// tras
 		else
 			if (currentY - goalY < 0){
-				this.turnAndGo(this.direc, "tras". true);
+				this.turnAndGo(this.direc, "tras", true);
 				//this.kalman.filtroKalman();
 			}
 			// direita
@@ -275,17 +277,17 @@ public class AStar {
     			}
     			break;
     	}
-    	this.direc = goal
+    	this.direc = goal;
     	if (go)
     		this.kalman.filtroKalman();
     	
 	}
 	
-	private void turnOn (int degress, int direction){
+	private void turnOn (int degrees, int direction){
 
 		if (direction == 1) { // Direita
-    		Motor.B.rotate( degrees, true);
-    		Motor.C.rotate( -degrees, true);
+    		Motor.B.rotate(degrees, true);
+    		Motor.C.rotate(-degrees, true);
     	}
     	else {
     		Motor.B.rotate( -degrees, true);
