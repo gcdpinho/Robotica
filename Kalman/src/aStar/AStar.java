@@ -12,7 +12,7 @@ public class AStar {
 	private double dist, length;
 	private Kalman kalman;
 	private static final int OBSTACLE = 1;
-	private static final int FREEPASS = 0;
+	//private static final int FREEPASS = 0;
 	private static final int POSROBOT = 10;
 	private String direc;
 	//private static final int GOAL = 2;
@@ -133,6 +133,8 @@ public class AStar {
 			this.calculatePath(current, openNodes.get(temp));
 			// nodo atual passa a ser o destino
 			current = openNodes.get(temp);
+			currentX = current.getX();
+			currentY = current.getY();
 			// remove esse nodo da lista
 			this.openNodes.remove(temp);
 			// vira pra frente de novo
