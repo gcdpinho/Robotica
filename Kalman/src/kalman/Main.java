@@ -3,7 +3,7 @@ import lejos.nxt.*;
 
 public class Main {
    
-    public static void main(String[] args) {  	
+   // public static void main(String[] args) {  	
     	
     	//KALMAN W = V²2/(V²1+V²2)
 
@@ -54,9 +54,9 @@ public class Main {
     	
     	// Kalman
     	
-    	Kalman kalman = new Kalman(0.9017, 0.1972, 50);
-    	kalman.filtroKalman();
+    	//Kalman kalman = new Kalman(0.9017, 0.1972, 50);
+    	//kalman.filtroKalman();
     	
-        Button.waitForAnyPress();
-    }
+        //Button.waitForAnyPress();
+    //}
 }
