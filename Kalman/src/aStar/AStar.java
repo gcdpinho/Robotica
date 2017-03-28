@@ -150,7 +150,7 @@ public class AStar {
 			Button.waitForAnyPress();
 			
 			// calcula o caminho para esse nodo e vai até ele
-			this.calculatePath(current, openNodes.get(temp));
+			this.calculatePath(current, openNodes.get(temp), "frente");
 			
 			// seta a posicao atual do robo como livre
 			this.map[currentX][currentY].setValue(FREEPASS);
@@ -178,7 +178,7 @@ public class AStar {
 	}
 	
 	// caso o proximo nodo não for vizinho ele retorna o caminho até que seja vizinho de algum nodo (recursivamente).
-	private void calculatePath(Node current, Node goal){
+	private void calculatePath(Node current, Node goal, String currenDirec){
 		int currentX = current.getX();
 		int currentY= current.getY();
 		int goalX = goal.getX();
@@ -186,19 +186,19 @@ public class AStar {
 		Node prox;
 
 		if (currentX - goalX == 0 && (currentY - goalY <= 1 && currentY - goalY >= -1))
-			this.walk(current, goal);
+			this.walk(current, goal, currenDirec);
 		else
 			if (currentY - goalY == 0 && (currentX - goalX <= 1 && currentX - goalX >= -1))
-				this.walk(current, goal);
+				this.walk(current, goal, currenDirec);
 			else {
 				prox = current.getPath().get(current.getPath().size()-1);
-				this.walk(current, prox);
-				this.calculatePath(prox, goal);
+				this.walk(current, prox, currenDirec);
+				this.calculatePath(prox, goal, this.direc);
 			}
 	}
 	
 	
-	private void walk(Node current, Node goal){
+	private void walk(Node current, Node goal, String currentDirec){
 		int currentX = current.getX();
 		int currentY= current.getY();
 		int goalX = goal.getX();
@@ -206,25 +206,25 @@ public class AStar {
 		
 		// frente
 		if (currentY - goalY < 0){
-			this.turnAndGo("frente", "frente", true);
+			this.turnAndGo(currentDirec, "frente", true);
 			//this.kalman.filtroKalman();
 		}
 		// tras
 		else
 			if (currentY - goalY > 0){
-				this.turnAndGo("frente", "tras", true);
+				this.turnAndGo(currentDirec, "tras", true);
 				//this.kalman.filtroKalman();
 			}
 			// direita
 			else
 				if (currentX - goalX < 0){
-					this.turnAndGo("frente", "direita", true);
+					this.turnAndGo(currentDirec, "direita", true);
 					//this.kalman.filtroKalman();
 				}
 				// esquerda
 				else 
 					if (currentX - goalX > 0){
-						this.turnAndGo("frente", "esquerda", true);
+						this.turnAndGo(currentDirec, "esquerda", true);
 						//this.kalman.filtroKalman();
 					}
 
