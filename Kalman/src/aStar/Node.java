@@ -39,7 +39,7 @@ public class Node {
 	}
 	
 	public void setPath(Node node){
-		if (!this.path.size().isEmpty()){
+		if (!this.path.isEmpty()){
 			this.path.addAll(node.getPath());
 			this.path.add(node);
 		}
