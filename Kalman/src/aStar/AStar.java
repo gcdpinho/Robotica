@@ -8,7 +8,7 @@ import lejos.nxt.*;
 
 public class AStar {
 
-	private int mapSize, direita, esquerda;
+	private int mapSize, direita, esquerda, goalY;
 	private double dist, length;
 	private Kalman kalman;
 	private static final int FREEPASS = 0;
@@ -50,7 +50,8 @@ public class AStar {
 		this.dist = this.getDistance(); // distancia do alvo em linha reta
 		System.out.println("Dist:" + this.dist);
 
-		goal = this.map[currentX][(int) (this.dist/this.length) + currentY -1];
+		this.mapGoal();
+		goal = this.map[currentX][this.goalY];
 		goal.setIsGoal(true); //mapeando a casa do alvo no tabuleiro	
 		System.out.println("Goal:" + goal.getX() + " " + goal.getY());
 		
@@ -178,6 +179,17 @@ public class AStar {
 		
 	}
 	
+	private void mapGoal(){
+		try {
+			this.goalY = (int) (this.dist/this.length) + this.initial.getY() + 1;
+		}
+		catch (Exception e){
+			System.out.println("Erro ao mapear o objetivo.");
+			Button.waitForAnyPress();
+			this.mapGoal();
+		}
+	}
+
 	// caso o proximo nodo não for vizinho ele retorna o caminho até que seja vizinho de algum nodo (recursivamente).
 	private void calculatePath(Node current, Node goal, String currenDirec){
 		int currentX = current.getX();
@@ -242,9 +254,44 @@ public class AStar {
 	}
 	
 	private double getDistance(){
-		UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
+		try{
+			ArrayList<Double> listUltra = new ArrayList<>();
+			double min, max;
+			int s = 0;
+			int iMin = 0;
+			int iMax = 0;
+
+			for (int i=0; i<listUltra.size(); i++){
+				UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
+				listUltra.add((double)ultrasom.getDistance());
+			}
+
+			min = listUltra.get(0);
+			max = listUltra.get(0);
+
+			for (int i=0; i<listUltra.size(); i++){
+				if (min > listUltra.get(i)){
+					min = listUltra.get(i);
+					iMin = i;
+				}
+				if (max < listUltra.get(i)){
+					max = listUltra.get(i);
+					iMax = i;
+				}
+			}
+			listUltra.remove(iMin);
+			listUltra.remove(iMax);
+
+			for (int i=0; i<listUltra.size(); i++)
+				s += listUltra.get(i);
 		
-		return ultrasom.getDistance();
+			return s/listUltra.size();
+		}
+		catch (Exception e){
+			System.out.println("Erro ao pegar a distância.");
+			Button.waitForAnyPress;
+			this.getDistance();
+		}
 	}
 	
 	private void turnAndGo(String current, String goal, boolean go){
