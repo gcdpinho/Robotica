@@ -289,9 +289,12 @@ public class AStar {
 		}
 		catch (Exception e){
 			System.out.println("Erro ao pegar a distância.");
-			Button.waitForAnyPress;
+			Button.waitForAnyPress();
 			this.getDistance();
+			
+			return -1;
 		}
+		
 	}
 	
 	private void turnAndGo(String current, String goal, boolean go){
