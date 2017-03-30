@@ -55,12 +55,19 @@ public class Main {
         
         // Kalman
         
-        Kalman kalman = new Kalman(0.9017, 0.1972, 23);
+        Kalman kalman = new Kalman(0.5512, 0.4488, 26);
+
+        //Button.waitForAnyPress();
+        
+        //kalman.filtroKalman();
+
         // arrumar valores de direita e esquerda (2880, 3050)
-        AStar aStar = new AStar(5, 2, 0, 23, kalman, 2350, 2350);
+        AStar aStar = new AStar(10, 3, 5, 26+10, kalman, 510, 510);
         
         aStar.run();
-        
-        Button.waitForAnyPress();
+        //aStar.teste(20);
+
+         Button.waitForAnyPress();
+    
     }
 }

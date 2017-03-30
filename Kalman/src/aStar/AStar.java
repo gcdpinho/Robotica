@@ -8,13 +8,13 @@ import lejos.nxt.*;
 
 public class AStar {
 
-	private int mapSize, direita, esquerda, goalY;
-	private double dist, length;
+	private int mapSize, direita, esquerda;
+	private double dist, length, goalY;
 	private Kalman kalman;
 	private static final int FREEPASS = 0;
 	private static final int OBSTACLE = 1;
 	private static final int POSROBOT = 10;
-	private String direc;
+	private String direc, sensor;
 	private Node[][] map;
 	private Node initial;
 	private ArrayList<Node> openNodes;
@@ -26,7 +26,8 @@ public class AStar {
 		this.initial = new Node(xInital, yInitial); // nodo inicial
 		//this.goal = new Node(xGoal, yGoal);
 		this.length = length; // tamanho do quadrado
-		this.direc = ""; // direcao da ultima posição
+		this.direc = "frente"; // direcao da ultima posição
+		this.sensor = "frente";
 		this.direita = direita; // angulo necessario pra virar a direita
 		this.esquerda = esquerda; // angulo necessario pra virar a esquerda
 
@@ -44,14 +45,16 @@ public class AStar {
 		int currentX = this.initial.getX(); 
 		int currentY = this.initial.getY();
 		Node goal;
-		
+		Node current = this.map[currentX][currentY];
+
 		//this.map[currentX][currentY].setPath(this.initial);
 		// Medi distancia em linha reta do alvo
-		this.dist = this.getDistance(); // distancia do alvo em linha reta
+		this.dist = this.getDistance(5); // distancia do alvo em linha reta
 		System.out.println("Dist:" + this.dist);
 
 		this.mapGoal();
-		goal = this.map[currentX][this.goalY];
+
+		goal = this.map[currentX][(int)this.goalY];
 		goal.setIsGoal(true); //mapeando a casa do alvo no tabuleiro	
 		System.out.println("Goal:" + goal.getX() + " " + goal.getY());
 		
@@ -61,85 +64,34 @@ public class AStar {
 		// Adiciona os nodos FREEPASS vizinhos na lista de nodos abertos
 		// Calcula a distancia euclidiana em relação ao alvo
 
-		Node current = this.map[currentX][currentY];
+		
 		while (!current.getIsGoal()){
 			//System.out.println(this.direc);
 			//busca por nodos abertos, verificando o ultimo movimento (para não retornar)
-
-			// frente
-			if (getDistance() >= this.length && currentY+1 < this.mapSize && !this.direc.equals("tras")){
-				this.map[currentX][currentY+1].setDist(goal);
-				//this.map[currentX][currentY+1].setCost(currentX, currentY);
-				this.openNodes.add(this.map[currentX][currentY+1]);
-				System.out.println("add frente: " + currentX + " " + (currentY+1));
-			}
-			else
-				if (!this.direc.equals("tras"))
-					try {
-						this.map[currentX][currentY+1].setValue(OBSTACLE);
-					}
-					catch (Exception e){
-						System.out.println("Fora do map.");
-					}
-
-			//esquerda
-			this.turnOn(this.esquerda, 2);
-			if (getDistance() >= this.length && currentX-1 >= 0 && !this.direc.equals("direita")){
-				this.map[currentX-1][currentY].setDist(goal);
-				//this.map[currentX-1][currentY].setCost(currentX, currentY);
-				System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
-				this.openNodes.add(this.map[currentX-1][currentY]);
-			}
-			else
-				if (!this.direc.equals("direita"))
-					try {
-						this.map[currentX-1][currentY].setValue(OBSTACLE);
-					}
-					catch (Exception e){
-						System.out.println("Fora do map.");
-					}
-
-			// tras
-			this.turnOn(esquerda, 2);
-			if (getDistance() >= this.length && currentY-1 >= 0 && !this.direc.equals("frente")){
-				this.map[currentX][currentY-1].setDist(goal);
-				//this.map[currentX][currentY-1].setCost(currentX, currentY);
-				this.openNodes.add(this.map[currentX][currentY-1]);
-				System.out.println("add tras: " + currentX + " " + (currentY-1));
-			}
-			else
-				if (!this.direc.equals("frente"))
-					try {
-						this.map[currentX][currentY-1].setValue(OBSTACLE);
-					}
-					catch (Exception e){
-						System.out.println("Fora do map.");
-					}
-
-			// direita
-			this.turnOn(esquerda, 2);
-			if (getDistance() >= this.length && currentX+1 < this.mapSize && !this.direc.equals("esquerda")){
-				this.map[currentX+1][currentY].setDist(goal);
-				//this.map[currentX+1][currentY].setCost(currentX, currentY);
-				this.openNodes.add(this.map[currentX+1][currentY]);
-				System.out.println("add direita: " + (currentX+1) + " " + currentY);
-			}
-			else
-				if (!this.direc.equals("esquerda"))
-					try {
-						this.map[currentX+1][currentY].setValue(OBSTACLE);
-					}
-					catch (Exception e){
-						System.out.println("Fora do map.");
-					}
 			
-			// vira pra frente novamente
-			this.turnOn(esquerda, 2);			
+			//System.out.println(this.direc);
+
+			//Button.waitForAnyPress();
+
+			this.calcNodes(currentX, currentY, goal);
+
+			this.turnSensor(100, 1);
+			this.sensor = "esquerda";
+			this.calcNodes(currentX, currentY, goal);
+
+			this.turnSensor(100, 2);
+
+			this.turnSensor(100, 2);
+			this.sensor = "direita";
+			this.calcNodes(currentX, currentY, goal);
+
+			this.turnSensor(100, 1);
+			this.sensor = "frente";
 			
 			// calcula o custo de todos os nodos da lista para a posição atual do robo
 			for (int i=0; i<this.openNodes.size(); i++){
 				this.openNodes.get(i).setCost(currentX, currentY);
-				System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY() + " " + this.openNodes.get(i).getCost() + " " + this.openNodes.get(i).getDist());
+				//System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY() /*+ " " + this.openNodes.get(i).getCost() + " " + this.openNodes.get(i).getDist()*/);
 				
 			}
 			
@@ -152,7 +104,7 @@ public class AStar {
 			//Button.waitForAnyPress();
 			
 			// calcula o caminho para esse nodo e vai até ele
-			this.calculatePath(current, openNodes.get(temp), "frente");
+			this.calculatePath(current, openNodes.get(temp));
 			
 			// seta a posicao atual do robo como livre
 			this.map[currentX][currentY].setValue(FREEPASS);
@@ -168,20 +120,163 @@ public class AStar {
 			// remove esse nodo da lista
 			this.openNodes.remove(temp);
 
-			for (int i=0; i<openNodes.size(); i++)
-				System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY());
+			//for (int i=0; i<openNodes.size(); i++)
+				//System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY());
 			
-			// vira pra frente de novo
-			turnAndGo(this.direc, "frente", false);
-		
-		// repete até chegar no alvo
+			//Button.waitForAnyPress();
+
 		}
 		
+		// repete até chegar no alvo
 	}
+		
 	
+	
+
+	private void calcNodes(int currentX, int currentY, Node goal){
+		double tempDist = getDistance(5);
+		//System.out.println(tempDist);
+		int obs;
+
+			switch(this.direc){
+				case "frente":
+					switch(sensor){
+						case "frente":
+							if (currentY+1 < this.mapSize)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY+1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY+1]);
+									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								}
+						break;
+						case "esquerda":
+							if (currentX-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX-1][currentY].setDist(goal);
+									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+									this.openNodes.add(this.map[currentX-1][currentY]);
+								}
+						break;
+						case "direita":
+							if (currentX+1 < this.mapSize)
+								if (tempDist >= this.length){
+									this.map[currentX+1][currentY].setDist(goal);
+									this.openNodes.add(this.map[currentX+1][currentY]);
+									System.out.println("add direita: " + (currentX+1) + " " + currentY);
+								}
+						break;
+					}
+				break;
+				case "esquerda":
+					switch(sensor){
+						case "frente":
+							if (currentX-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX-1][currentY].setDist(goal);
+									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+									this.openNodes.add(this.map[currentX-1][currentY]);
+								}
+						break;
+						case "esquerda":
+							if (currentY-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY-1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY-1]);
+									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								}
+						break;
+						case "direita":
+							if (currentY+1 < this.mapSize)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY+1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY+1]);
+									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								}
+						break;
+					}
+				case "direita":
+					switch(sensor){
+						case "frente":
+							if (currentX+1 < this.mapSize)
+								if (tempDist >= this.length){
+										this.map[currentX+1][currentY].setDist(goal);
+										this.openNodes.add(this.map[currentX+1][currentY]);
+										System.out.println("add direita: " + (currentX+1) + " " + currentY);
+								}
+						break;
+						case "esquerda":
+							if (currentY+1 < this.mapSize)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY+1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY+1]);
+									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								}
+						break;
+						case "direita":
+							if (currentY-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY-1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY-1]);
+									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								}
+						break;
+					}
+				break;
+				case "tras":
+					switch(sensor){
+						case "frente":
+							System.out.println("?" + tempDist);
+							if (currentY-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX][currentY-1].setDist(goal);
+									this.openNodes.add(this.map[currentX][currentY-1]);
+									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								}
+						break;
+						case "esquerda":
+							if (currentX+1 < this.mapSize)
+								if (tempDist >= this.length){
+										this.map[currentX+1][currentY].setDist(goal);
+										this.openNodes.add(this.map[currentX+1][currentY]);
+										System.out.println("add direita: " + (currentX+1) + " " + currentY);
+								}
+						break;
+						case "direita":
+							if (currentX-1 >= 0)
+								if (tempDist >= this.length){
+									this.map[currentX-1][currentY].setDist(goal);
+									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+									this.openNodes.add(this.map[currentX-1][currentY]);
+								}
+						break;
+					}
+				break;
+			}
+	}
+
+	public void turnSensor(int degrees, int direction){
+		Motor.A.setSpeed(80);
+
+		if (direction == 1)
+			Motor.A.rotate(degrees, true);
+		else
+			Motor.A.rotate(-degrees, true);
+			
+		try {
+			Thread.sleep(2000);
+
+			Motor.A.stop();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Erro ao girar o sensor.");
+		}
+			
+	}
+
 	private void mapGoal(){
 		try {
-			this.goalY = (int) (this.dist/this.length) + this.initial.getY() + 1;
+			//this.goalY = 255.0/26;
+			this.goalY =  this.dist/(this.length-13) + this.initial.getY();
 		}
 		catch (Exception e){
 			System.out.println("Erro ao mapear o objetivo.");
@@ -191,7 +286,7 @@ public class AStar {
 	}
 
 	// caso o proximo nodo não for vizinho ele retorna o caminho até que seja vizinho de algum nodo (recursivamente).
-	private void calculatePath(Node current, Node goal, String currenDirec){
+	private void calculatePath(Node current, Node goal){
 		int currentX = current.getX();
 		int currentY= current.getY();
 		int goalX = goal.getX();
@@ -199,77 +294,150 @@ public class AStar {
 		Node prox;
 
 		if (currentX - goalX == 0 && (currentY - goalY <= 1 && currentY - goalY >= -1))
-			this.walk(current, goal, currenDirec);
+			this.walk(current, goal);
 		else
 			if (currentY - goalY == 0 && (currentX - goalX <= 1 && currentX - goalX >= -1))
-				this.walk(current, goal, currenDirec);
+				this.walk(current, goal);
 			else {
 				
 				System.out.println("back: "+ current.getPath().size());
 				//Button.waitForAnyPress();
 				prox = current.getPath().get(current.getPath().size()-1);
 				//System.out.println("aqui1");
-				this.walk(current, prox, currenDirec);
+				this.walk(current, prox);
 				//System.out.println("aqui2");
-				this.calculatePath(prox, goal, this.direc);
+				this.calculatePath(prox, goal);
 			}
 	}
 	
 	
-	private void walk(Node current, Node goal, String currentDirec){
+	private void walk(Node current, Node goal){
 		int currentX = current.getX();
 		int currentY= current.getY();
 		int goalX = goal.getX();
 		int goalY = goal.getY();
-		
+		String tempDirec = "";
 		// frente
 		if (currentY - goalY < 0){
-			this.turnAndGo(currentDirec, "frente", true);
+			this.turnAndGo(this.direc, "frente");
+			/*switch(this.direc){
+				case "frente":
+					this.turnAndGo(this.direc, "frente");
+				break;
+				case "esquerda":
+					this.turnAndGo(this.direc, "direita");
+				break;
+				case "direita":
+					this.turnAndGo(this.direc, "esquerda");
+				break;
+				case "tras":
+					this.turnAndGo(this.direc, "tras");
+				break;
+			}*/
 			//this.kalman.filtroKalman();
 		}
 		// tras
 		else
 			if (currentY - goalY > 0){
-				this.turnAndGo(currentDirec, "tras", true);
-				//this.kalman.filtroKalman();
+				this.turnAndGo(this.direc, "tras");
+				/*switch(this.direc){
+					case "frente":
+						this.turnAndGo(this.direc, "tras");
+					break;
+					case "esquerda":
+						this.turnAndGo(this.direc, "esquerda");
+					break;
+					case "direita":
+						this.turnAndGo(this.direc, "direita");
+					break;
+					case "tras":
+						this.turnAndGo(this.direc, "frente");
+					break;
+					//this.kalman.filtroKalman();
+				}*/
 			}
 			// direita
 			else
 				if (currentX - goalX < 0){
-					this.turnAndGo(currentDirec, "direita", true);
+					this.turnAndGo(this.direc, "direita");
+					/*switch(this.direc){
+						case "frente":
+							this.turnAndGo(this.direc, "direita");
+						break;
+						case "esquerda":
+							this.turnAndGo(this.direc, "tras");
+						break;
+						case "direita":
+							this.turnAndGo(this.direc, "frente");
+						break;
+						case "tras":
+							this.turnAndGo(this.direc, "esquerda");
+						break;
+						//this.kalman.filtroKalman();
+					}*/
 					//this.kalman.filtroKalman();
 				}
 				// esquerda
 				else 
 					if (currentX - goalX > 0){
-						this.turnAndGo(currentDirec, "esquerda", true);
+						this.turnAndGo(this.direc, "esquerda");
+						/*switch(this.direc){
+							case "frente":
+								this.turnAndGo(this.direc, "esquerda");
+							break;
+							case "esquerda":
+								this.turnAndGo(this.direc, "frente");
+							break;
+							case "direita":
+								System.out.println("aqui");
+								this.turnAndGo(this.direc, "tras");
+							break;
+							case "tras":
+								this.turnAndGo(this.direc, "direita");
+							break;
+							//this.kalman.filtroKalman();
+				}*/
 						//this.kalman.filtroKalman();
 					}
-		System.out.println("pathCurrent: "+ currentX + " " + currentY + " " + this.map[currentX][currentY].getPath().size());
+		//System.out.println("pathCurrent: "+ currentX + " " + currentY + " " + this.map[currentX][currentY].getPath().size());
 		if (goalX != this.initial.getX() || goalY != this.initial.getY()){
-			System.out.println("entrou");
+			//System.out.println("entrou");
 			this.map[goalX][goalY].setPath(this.map[currentX][currentY]);
 		}
-		System.out.println("pathGoal: " + goalX + " " + goalY+ " " + this.map[goalX][goalY].getPath().size());			
+		//System.out.println("pathGoal: " + goalX + " " + goalY+ " " + this.map[goalX][goalY].getPath().size());			
 	}
 	
-	private double getDistance(){
-		try{
+	public void teste(int index){
+		int color;
+
+		for (int i=0; i<index; i++){
+			ColorSensor colorSensor = new ColorSensor(SensorPort.S1);
+	    	color = colorSensor.getColorID();
+	    	System.out.println(color);
+	    	SensorPort.S1.reset();
+
+	    	Button.waitForAnyPress();
+		}
+	}
+
+	private double getDistance(int x){
+		/*try{
 			ArrayList<Double> listUltra = new ArrayList<>();
 			double min, max;
 			int s = 0;
 			int iMin = 0;
 			int iMax = 0;
 
-			for (int i=0; i<listUltra.size(); i++){
-				UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
-				listUltra.add((double)ultrasom.getDistance());
-			}
+			for (int i=0; i<x; i++){
+			*/	UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
+				/*listUltra.add((double)*/return ultrasom.getDistance();
+			/*}
 
 			min = listUltra.get(0);
 			max = listUltra.get(0);
 
 			for (int i=0; i<listUltra.size(); i++){
+				//System.out.println(listUltra.get(i));
 				if (min > listUltra.get(i)){
 					min = listUltra.get(i);
 					iMin = i;
@@ -290,14 +458,14 @@ public class AStar {
 		catch (Exception e){
 			System.out.println("Erro ao pegar a distância.");
 			Button.waitForAnyPress();
-			this.getDistance();
+			//this.getDistance(5);
 			
-			return -1;
-		}
+			return 255;
+		}*/
 		
 	}
 	
-	private void turnAndGo(String current, String goal, boolean go){
+	private void turnAndGo(String current, String goal){
     	// verifica a direção atual e para qual direção deve ir
 
     	switch(current){
@@ -306,36 +474,38 @@ public class AStar {
     				case "frente":
     					break;
     				case "tras":
-    					this.turnOn(this.esquerda*2, 2);
+    					this.turnOn(this.esquerda, 1);
+    					this.turnOn(this.esquerda, 1);
     					break;
     				
     				case "esquerda":
-    					this.turnOn(this.esquerda, 2);
+    					this.turnOn(this.esquerda, 1);
     					break;
     				case "direita":
-    					this.turnOn(this.direita, 1);
+    					this.turnOn(this.direita, 2);
     					break;
     			}
     			break;
     		case "tras":
     			switch(goal){
     				case "frente":
-    					this.turnOn(this.direita*2, 1);
+    					this.turnOn(this.direita, 2);
+    					this.turnOn(this.direita, 2);
     					break;
     				case "tras":	
     					break;
     				case "esquerda":
-    					this.turnOn(this.direita, 1);
+    					this.turnOn(this.direita, 2);
     					break;
     				case "direita":
-    					this.turnOn(this.esquerda, 2);
+    					this.turnOn(this.esquerda, 1);
     					break;
     			}
     			break;
     		case "esquerda":
     			switch(goal){
     				case "frente":
-    					this.turnOn(this.direita, 1);
+    					this.turnOn(this.direita, 2);
     					break;
     				case "tras":
     					this.turnOn(this.esquerda, 1);	
@@ -343,33 +513,34 @@ public class AStar {
     				case "esquerda":
     					break;
     				case "direita":
-    					this.turnOn(this.esquerda*2, 2);
+    					this.turnOn(this.esquerda, 1);
+    					this.turnOn(this.esquerda, 1);
     					break;
     			}
     			break;
     		case "direita":
     			switch(goal){
     				case "frente":
-    					this.turnOn(this.esquerda, 2);
+    					this.turnOn(this.esquerda, 1);
     					break;
     				case "tras":
-    					this.turnOn(this.direita, 1);	
+    					this.turnOn(this.direita, 2);	
     					break;
     				case "esquerda":
-    					this.turnOn(this.direita*2, 1);
+    					this.turnOn(this.direita, 2);
+    					this.turnOn(this.direita, 2);
     					break;
     				case "direita":
     					break;
     			}
     			break;
     	}
-    	if (go){		
-    		this.kalman.filtroKalman();
-    		this.direc = goal;
-    	}
+   		this.kalman.filtroKalman();
+    	this.direc = goal;
+    	
 	}
 	
-	private void turnOn (int degrees, int direction){
+	public void turnOn (int degrees, int direction){
 		//Button.waitForAnyPress();
 		///*
 		Motor.B.setSpeed(150);
@@ -388,7 +559,7 @@ public class AStar {
     	}
 		
 		try {
-			Thread.sleep(13000);
+			Thread.sleep(5000);
 			
 			Motor.B.stop();
 			Motor.C.stop();
