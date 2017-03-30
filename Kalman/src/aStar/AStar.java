@@ -101,7 +101,7 @@ public class AStar {
 			int temp = getBestNode();
 			System.out.println("best node: " + openNodes.get(temp).getX() + " " + openNodes.get(temp).getY());
 			
-			//Button.waitForAnyPress();
+			Button.waitForAnyPress();
 			
 			// calcula o caminho para esse nodo e vai até ele
 			this.calculatePath(current, openNodes.get(temp));
@@ -194,6 +194,7 @@ public class AStar {
 								}
 						break;
 					}
+				break;
 				case "direita":
 					switch(sensor){
 						case "frente":
