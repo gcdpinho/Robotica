@@ -13,8 +13,8 @@ public class Kalman {
 		this.w = v2/(v1+v2);
 		this.pos = 0;
 		this.meta = meta;
-		this.volta = 13.5;
-		this.marc = this.volta/4;
+		this.volta = 31;
+		this.marc = this.volta/18;
 	}
 	
 	public void filtroKalman(){
@@ -27,19 +27,17 @@ public class Kalman {
 	    UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
         init = ultrasom.getDistance();
 	    
-	    Motor.B.rotate(-36000, true);
-	    Motor.C.rotate(-36000, true);
+	    Motor.B.rotate(36000, true);
+	    Motor.C.rotate(36000, true);
 	    
 	    do {
 	    		ColorSensor colorSensor = new ColorSensor(SensorPort.S1);
 	    		color = colorSensor.getColorID();
 	    		//System.out.println(color);
-	    		if (color != 7 && anterior == 7){
+	    		if (color != 7){
 	    			medOdometro += this.marc;
 	    			anterior = color;
 	    		}
-	    		else
-	    			anterior = 7;
 	    		//System.out.println("Odometro:"+medOdometro);
     	 		SensorPort.S1.reset();
     	 		
@@ -48,7 +46,7 @@ public class Kalman {
 	    		//System.out.println("Ultrassom:"+medUltrassom);
 	    		this.pos = medOdometro * this.w + (1-this.w) * medUltrassom;
 				//System.out.println(this.pos);
-			} while (this.pos < this.meta && Motor.B.isMoving());
+			} while (pos < this.meta && Motor.B.isMoving());
 
 	    Motor.B.stop();
 	    Motor.C.stop();
