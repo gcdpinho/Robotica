@@ -8,7 +8,7 @@ import lejos.nxt.*;
 
 public class AStar {
 
-	private int mapSize, direita, esquerda;
+	private int mapSize, direita, esquerda, motSensor;
 	private double dist, length, goalY;
 	private Kalman kalman;
 	private static final int FREEPASS = 0;
@@ -17,9 +17,9 @@ public class AStar {
 	private String direc, sensor;
 	private Node[][] map;
 	private Node initial;
-	private ArrayList<Node> openNodes;
+	private ArrayList<Node> openNodes, visitNodes;
 	
-	public AStar(int mapSize, int xInital, int yInitial, /*int xGoal, int yGoal,*/ double length, Kalman kalman, int direita, int esquerda){
+	public AStar(int mapSize, int xInital, int yInitial, /*int xGoal, int yGoal,*/ double length, Kalman kalman, int direita, int esquerda, int motSensor){
 		this.mapSize = mapSize; // tamaho do mapa
 		this.kalman = kalman; // kalman (andar x centimetros)
 		this.map = new Node[this.mapSize][this.mapSize]; // tabuleiro
@@ -30,6 +30,7 @@ public class AStar {
 		this.sensor = "frente";
 		this.direita = direita; // angulo necessario pra virar a direita
 		this.esquerda = esquerda; // angulo necessario pra virar a esquerda
+		this.motSensor = motSensor;
 
 		for (int i=0; i<this.mapSize; i++)
 			for (int j=0; j<this.mapSize; j++)
@@ -39,6 +40,7 @@ public class AStar {
 		//this.map[xGoal][yGoal].setIsGoal(true);
 		
 		this.openNodes = new ArrayList<>();
+		this.visitNodes = new ArrayList<>();
 	}
 	
 	public void run(){
@@ -50,6 +52,11 @@ public class AStar {
 		//this.map[currentX][currentY].setPath(this.initial);
 		// Medi distancia em linha reta do alvo
 		this.dist = this.getDistance(5); // distancia do alvo em linha reta
+		while (this.dist == 255.0){
+			System.out.println ("Erro ao identificar o osbtaculo.");
+			Button.waitForAnyPress();
+			this.dist = this.getDistance(5);
+		}
 		System.out.println("Dist:" + this.dist);
 
 		this.mapGoal();
@@ -58,6 +65,8 @@ public class AStar {
 		goal.setIsGoal(true); //mapeando a casa do alvo no tabuleiro	
 		System.out.println("Goal:" + goal.getX() + " " + goal.getY());
 		
+		this.visitNodes.add(this.initial);
+
 		Button.waitForAnyPress();
 		
 		// Gira para todos os lados e ve os obstaculos
@@ -75,26 +84,28 @@ public class AStar {
 
 			this.calcNodes(currentX, currentY, goal);
 
-			this.turnSensor(100, 1);
+			this.turnSensor(this.motSensor, 1);
 			this.sensor = "esquerda";
 			this.calcNodes(currentX, currentY, goal);
 
-			this.turnSensor(100, 2);
+			this.turnSensor(this.motSensor, 2);
 
-			this.turnSensor(100, 2);
+			this.turnSensor(this.motSensor, 2);
 			this.sensor = "direita";
 			this.calcNodes(currentX, currentY, goal);
 
-			this.turnSensor(100, 1);
+			this.turnSensor(this.motSensor, 1);
 			this.sensor = "frente";
 			
+
+			removeRepeat();
+
 			// calcula o custo de todos os nodos da lista para a posição atual do robo
 			for (int i=0; i<this.openNodes.size(); i++){
 				this.openNodes.get(i).setCost(currentX, currentY);
-				//System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY() /*+ " " + this.openNodes.get(i).getCost() + " " + this.openNodes.get(i).getDist()*/);
+				System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY() /*+ " " + this.openNodes.get(i).getCost() + " " + this.openNodes.get(i).getDist()*/);
 				
 			}
-			
 			//Button.waitForAnyPress();
 			
 			// pega o nodo com menor distância	
@@ -114,6 +125,7 @@ public class AStar {
 			currentX = current.getX();
 			currentY = current.getY();
 
+			this.visitNodes.add(current);
 			// seta a nova posicao atual do robo
 			this.map[currentX][currentY].setValue(POSROBOT);			
 
@@ -126,7 +138,7 @@ public class AStar {
 			//Button.waitForAnyPress();
 
 		}
-		
+		System.out.println("\n\nCheguei!");
 		// repete até chegar no alvo
 	}
 		
@@ -135,7 +147,7 @@ public class AStar {
 
 	private void calcNodes(int currentX, int currentY, Node goal){
 		double tempDist = getDistance(5);
-		//System.out.println(tempDist);
+		System.out.println(tempDist);
 		int obs;
 
 			switch(this.direc){
@@ -143,27 +155,39 @@ public class AStar {
 					switch(sensor){
 						case "frente":
 							if (currentY+1 < this.mapSize)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY+1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY+1]);
-									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								if (tempDist >= this.length && this.map[currentX][currentY+1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY+1])){
+										this.map[currentX][currentY+1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY+1]);
+										System.out.println("add frente: " + currentX + " " + (currentY+1));
+									}
 								}
+								else
+									this.map[currentX][currentY+1].setValue(OBSTACLE);
 						break;
 						case "esquerda":
 							if (currentX-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX-1][currentY].setDist(goal);
-									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
-									this.openNodes.add(this.map[currentX-1][currentY]);
+								if (tempDist >= this.length && this.map[currentX-1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX-1][currentY])){
+										this.map[currentX-1][currentY].setDist(goal);
+										System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+										this.openNodes.add(this.map[currentX-1][currentY]);
+									}
 								}
+								else
+									this.map[currentX-1][currentY].setValue(OBSTACLE);
 						break;
 						case "direita":
 							if (currentX+1 < this.mapSize)
-								if (tempDist >= this.length){
-									this.map[currentX+1][currentY].setDist(goal);
-									this.openNodes.add(this.map[currentX+1][currentY]);
-									System.out.println("add direita: " + (currentX+1) + " " + currentY);
+								if (tempDist >= this.length && this.map[currentX+1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX+1][currentY])){
+										this.map[currentX+1][currentY].setDist(goal);
+										this.openNodes.add(this.map[currentX+1][currentY]);
+										System.out.println("add direita: " + (currentX+1) + " " + currentY);
+									}
 								}
+								else
+									this.map[currentX+1][currentY].setValue(OBSTACLE);
 						break;
 					}
 				break;
@@ -171,87 +195,132 @@ public class AStar {
 					switch(sensor){
 						case "frente":
 							if (currentX-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX-1][currentY].setDist(goal);
-									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
-									this.openNodes.add(this.map[currentX-1][currentY]);
+								if (tempDist >= this.length && this.map[currentX-1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX-1][currentY])){
+										this.map[currentX-1][currentY].setDist(goal);
+										System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+										this.openNodes.add(this.map[currentX-1][currentY]);
+									}
 								}
+								else
+									this.map[currentX-1][currentY].setValue(OBSTACLE);
 						break;
 						case "esquerda":
 							if (currentY-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY-1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY-1]);
-									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								if (tempDist >= this.length && this.map[currentX][currentY-1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY-1])){
+										this.map[currentX][currentY-1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY-1]);
+										System.out.println("add tras: " + currentX + " " + (currentY-1));
+									}
 								}
+								else
+									this.map[currentX][currentY-1].setValue(OBSTACLE);
 						break;
 						case "direita":
 							if (currentY+1 < this.mapSize)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY+1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY+1]);
-									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								if (tempDist >= this.length && this.map[currentX][currentY+1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY+1])){
+										this.map[currentX][currentY+1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY+1]);
+										System.out.println("add frente: " + currentX + " " + (currentY+1));
+									}
 								}
+								else
+									this.map[currentX][currentY+1].setValue(OBSTACLE);
 						break;
 					}
+				break;
 				case "direita":
 					switch(sensor){
 						case "frente":
 							if (currentX+1 < this.mapSize)
-								if (tempDist >= this.length){
-										this.map[currentX+1][currentY].setDist(goal);
-										this.openNodes.add(this.map[currentX+1][currentY]);
-										System.out.println("add direita: " + (currentX+1) + " " + currentY);
+								if (tempDist >= this.length && this.map[currentX+1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX+1][currentY])){
+											this.map[currentX+1][currentY].setDist(goal);
+											this.openNodes.add(this.map[currentX+1][currentY]);
+											System.out.println("add direita: " + (currentX+1) + " " + currentY);
+									}
 								}
+								else
+									this.map[currentX+1][currentY].setValue(OBSTACLE);
 						break;
 						case "esquerda":
 							if (currentY+1 < this.mapSize)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY+1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY+1]);
-									System.out.println("add frente: " + currentX + " " + (currentY+1));
+								if (tempDist >= this.length && this.map[currentX][currentY+1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY+1])){
+										this.map[currentX][currentY+1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY+1]);
+										System.out.println("add frente: " + currentX + " " + (currentY+1));
+									}
 								}
+								else
+									this.map[currentX][currentY+1].setValue(OBSTACLE);
 						break;
 						case "direita":
 							if (currentY-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY-1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY-1]);
-									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								if (tempDist >= this.length && this.map[currentX][currentY-1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY-1])){
+										this.map[currentX][currentY-1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY-1]);
+										System.out.println("add tras: " + currentX + " " + (currentY-1));
+									}
 								}
+								else
+									this.map[currentX][currentY-1].setValue(OBSTACLE);
 						break;
 					}
 				break;
 				case "tras":
 					switch(sensor){
 						case "frente":
-							System.out.println("?" + tempDist);
+							//System.out.println("?" + tempDist);
 							if (currentY-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX][currentY-1].setDist(goal);
-									this.openNodes.add(this.map[currentX][currentY-1]);
-									System.out.println("add tras: " + currentX + " " + (currentY-1));
+								if (tempDist >= this.length && this.map[currentX][currentY-1].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX][currentY-1])){
+										this.map[currentX][currentY-1].setDist(goal);
+										this.openNodes.add(this.map[currentX][currentY-1]);
+										System.out.println("add tras: " + currentX + " " + (currentY-1));
+									}
 								}
+								else
+									this.map[currentX][currentY-1].setValue(OBSTACLE);
 						break;
 						case "esquerda":
 							if (currentX+1 < this.mapSize)
-								if (tempDist >= this.length){
+								if (tempDist >= this.length && this.map[currentX+1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX+1][currentY])){
 										this.map[currentX+1][currentY].setDist(goal);
 										this.openNodes.add(this.map[currentX+1][currentY]);
 										System.out.println("add direita: " + (currentX+1) + " " + currentY);
+									}
 								}
+								else
+									this.map[currentX+1][currentY].setValue(OBSTACLE);
 						break;
 						case "direita":
 							if (currentX-1 >= 0)
-								if (tempDist >= this.length){
-									this.map[currentX-1][currentY].setDist(goal);
-									System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
-									this.openNodes.add(this.map[currentX-1][currentY]);
+								if (tempDist >= this.length && this.map[currentX-1][currentY].getValue() != OBSTACLE){
+									if (!this.testVisitNodes(this.map[currentX-1][currentY])){		
+										this.map[currentX-1][currentY].setDist(goal);
+										System.out.println("add esquerda: " + (currentX-1) + " " + currentY);
+										this.openNodes.add(this.map[currentX-1][currentY]);
+									}
 								}
+								else
+									this.map[currentX-1][currentY].setValue(OBSTACLE);
 						break;
 					}
 				break;
 			}
+	}
+
+	private boolean testVisitNodes(Node current){
+		for (int i=0; i<this.visitNodes.size(); i++)
+			if (this.visitNodes.get(i).getX() == current.getX() && this.visitNodes.get(i).getY() == current.getY())
+				return true;
+
+		return false;
 	}
 
 	public void turnSensor(int degrees, int direction){
@@ -429,7 +498,7 @@ public class AStar {
 			int iMax = 0;
 
 			for (int i=0; i<x; i++){
-			*/	UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
+			*/	UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S3);
 				/*listUltra.add((double)*/return ultrasom.getDistance();
 			/*}
 
@@ -570,22 +639,40 @@ public class AStar {
 		}
 		//*/
 	}
-
+	public void removeRepeat() {
+		for (int i = 0; i < this.openNodes.size(); i++) {
+			int xi = this.openNodes.get(i).getX();
+			int yi = this.openNodes.get(i).getY();
+			for (int j = i+1; j < this.openNodes.size(); j++) {
+				int xj = this.openNodes.get(j).getX();
+				int yj = this.openNodes.get(j).getY();
+				if (xi == xj && yi == yj) {
+					this.openNodes.remove(j);
+					j--;
+				}
+			}
+		}
+	};
 	private int getBestNode(){
 		ArrayList<Integer> resultIndex = new ArrayList<>();
-		double result = this.openNodes.get(0).getCost() + this.openNodes.get(0).getDist();
+		double result = this.openNodes.get(0).getDist();
 		double aux;
 		
+		
+
 		// pega o nodo com menor custo
 		for (int i=1; i<this.openNodes.size(); i++){
-			aux = this.openNodes.get(i).getCost() + this.openNodes.get(i).getDist();
+			aux = this.openNodes.get(i).getDist();
 			if (result > aux)
 				result = aux;				
 		}
+
+		
+	
 		
 		// se tiver nodos com custos iguais retorna um randomicamente
 		for (int i=0; i<this.openNodes.size(); i++){
-			if (result == this.openNodes.get(i).getCost() + this.openNodes.get(i).getDist())
+			if (result == this.openNodes.get(i).getDist())
 				resultIndex.add(i);
 		}
 		

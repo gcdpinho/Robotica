@@ -39,7 +39,28 @@ public class Main {
                 
          Motor.B.stop();
          Motor.C.stop();
-        */
+    	*/
+    	
+    	// Medicao Odometro
+    	/*
+    	Odometro odometro = new Odometro(50);
+    	odometro.medirOdometro();
+    	*/
+    	
+    	// Medicao Ultrassom
+    	/*
+    	Ultrasom ultrasom = new Ultrasom(50);
+    	ultrasom.medirUltrasom();
+    	*/
+    	
+    	// Kalman
+    	
+    	//Kalman kalman = new Kalman(0.9017, 0.1972, 23);
+        // arrumar valores de direita e esquerda (2880, 3050)
+    	//AStar aStar = new AStar(5, 2, 0, 23, kalman, 2350, 2350);
+    	
+    	//aStar.run();
+
         
         // Medicao Odometro
         /*
@@ -62,12 +83,14 @@ public class Main {
         //kalman.filtroKalman();
 
         // arrumar valores de direita e esquerda (2880, 3050)
-        AStar aStar = new AStar(10, 3, 5, 26+10, kalman, 510, 510);
+        AStar aStar = new AStar(10, 3, 5, 26+10, kalman, 510, 510, 80);
         
         aStar.run();
+
         //aStar.teste(20);
 
          Button.waitForAnyPress();
     
+
     }
 }
