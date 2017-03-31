@@ -30,7 +30,7 @@ public class AStar {
 		this.sensor = "frente";
 		this.direita = direita; // angulo necessario pra virar a direita
 		this.esquerda = esquerda; // angulo necessario pra virar a esquerda
-		this.motSensor = motSensor;
+		this.motSensor = motSensor;// angulo que gira o sensor ultrassom
 
 		for (int i=0; i<this.mapSize; i++)
 			for (int j=0; j<this.mapSize; j++)
@@ -75,12 +75,6 @@ public class AStar {
 
 		
 		while (!current.getIsGoal()){
-			//System.out.println(this.direc);
-			//busca por nodos abertos, verificando o ultimo movimento (para não retornar)
-			
-			//System.out.println(this.direc);
-
-			//Button.waitForAnyPress();
 
 			this.calcNodes(currentX, currentY, goal);
 
@@ -106,7 +100,7 @@ public class AStar {
 				System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY() /*+ " " + this.openNodes.get(i).getCost() + " " + this.openNodes.get(i).getDist()*/);
 				
 			}
-			//Button.waitForAnyPress();
+
 			
 			// pega o nodo com menor distância	
 			int temp = getBestNode();
@@ -132,14 +126,12 @@ public class AStar {
 			// remove esse nodo da lista
 			this.openNodes.remove(temp);
 
-			//for (int i=0; i<openNodes.size(); i++)
-				//System.out.println(this.openNodes.get(i).getX() + " " + this.openNodes.get(i).getY());
-			
-			//Button.waitForAnyPress();
-
 		}
+
 		System.out.println("\n\nCheguei!");
-		// repete até chegar no alvo
+
+		//fim
+		
 	}
 		
 	
@@ -323,7 +315,7 @@ public class AStar {
 		return false;
 	}
 
-	public void turnSensor(int degrees, int direction){
+	private void turnSensor(int degrees, int direction){
 		Motor.A.setSpeed(80);
 
 		if (direction == 1)
@@ -345,7 +337,7 @@ public class AStar {
 	private void mapGoal(){
 		try {
 			//this.goalY = 255.0/26;
-			this.goalY =  this.dist/(this.length-13) + this.initial.getY();
+			this.goalY =  this.dist/(this.length) + this.initial.getY();
 		}
 		catch (Exception e){
 			System.out.println("Erro ao mapear o objetivo.");
@@ -389,104 +381,32 @@ public class AStar {
 		// frente
 		if (currentY - goalY < 0){
 			this.turnAndGo(this.direc, "frente");
-			/*switch(this.direc){
-				case "frente":
-					this.turnAndGo(this.direc, "frente");
-				break;
-				case "esquerda":
-					this.turnAndGo(this.direc, "direita");
-				break;
-				case "direita":
-					this.turnAndGo(this.direc, "esquerda");
-				break;
-				case "tras":
-					this.turnAndGo(this.direc, "tras");
-				break;
-			}*/
-			//this.kalman.filtroKalman();
+
 		}
 		// tras
 		else
 			if (currentY - goalY > 0){
 				this.turnAndGo(this.direc, "tras");
-				/*switch(this.direc){
-					case "frente":
-						this.turnAndGo(this.direc, "tras");
-					break;
-					case "esquerda":
-						this.turnAndGo(this.direc, "esquerda");
-					break;
-					case "direita":
-						this.turnAndGo(this.direc, "direita");
-					break;
-					case "tras":
-						this.turnAndGo(this.direc, "frente");
-					break;
-					//this.kalman.filtroKalman();
-				}*/
+
 			}
 			// direita
 			else
 				if (currentX - goalX < 0){
 					this.turnAndGo(this.direc, "direita");
-					/*switch(this.direc){
-						case "frente":
-							this.turnAndGo(this.direc, "direita");
-						break;
-						case "esquerda":
-							this.turnAndGo(this.direc, "tras");
-						break;
-						case "direita":
-							this.turnAndGo(this.direc, "frente");
-						break;
-						case "tras":
-							this.turnAndGo(this.direc, "esquerda");
-						break;
-						//this.kalman.filtroKalman();
-					}*/
-					//this.kalman.filtroKalman();
+
 				}
 				// esquerda
 				else 
 					if (currentX - goalX > 0){
 						this.turnAndGo(this.direc, "esquerda");
-						/*switch(this.direc){
-							case "frente":
-								this.turnAndGo(this.direc, "esquerda");
-							break;
-							case "esquerda":
-								this.turnAndGo(this.direc, "frente");
-							break;
-							case "direita":
-								System.out.println("aqui");
-								this.turnAndGo(this.direc, "tras");
-							break;
-							case "tras":
-								this.turnAndGo(this.direc, "direita");
-							break;
-							//this.kalman.filtroKalman();
-				}*/
-						//this.kalman.filtroKalman();
+	
+						
 					}
-		//System.out.println("pathCurrent: "+ currentX + " " + currentY + " " + this.map[currentX][currentY].getPath().size());
+
 		if (goalX != this.initial.getX() || goalY != this.initial.getY()){
-			//System.out.println("entrou");
 			this.map[goalX][goalY].setPath(this.map[currentX][currentY]);
 		}
-		//System.out.println("pathGoal: " + goalX + " " + goalY+ " " + this.map[goalX][goalY].getPath().size());			
-	}
-	
-	public void teste(int index){
-		int color;
-
-		for (int i=0; i<index; i++){
-			ColorSensor colorSensor = new ColorSensor(SensorPort.S1);
-	    	color = colorSensor.getColorID();
-	    	System.out.println(color);
-	    	SensorPort.S1.reset();
-
-	    	Button.waitForAnyPress();
-		}
+				
 	}
 
 	private double getDistance(int x){
@@ -609,7 +529,7 @@ public class AStar {
     	
 	}
 	
-	public void turnOn (int degrees, int direction){
+	private void turnOn (int degrees, int direction){
 		//Button.waitForAnyPress();
 		///*
 		Motor.B.setSpeed(150);
@@ -639,7 +559,7 @@ public class AStar {
 		}
 		//*/
 	}
-	public void removeRepeat() {
+	private void removeRepeat() {
 		for (int i = 0; i < this.openNodes.size(); i++) {
 			int xi = this.openNodes.get(i).getX();
 			int yi = this.openNodes.get(i).getY();
