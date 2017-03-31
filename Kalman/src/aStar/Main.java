@@ -79,13 +79,25 @@ public class Main {
         
         // Kalman
         
-        Kalman kalman = new Kalman(0.9017, 0.1972, 23);
+        Kalman kalman = new Kalman(0.5512, 0.4488, 26);
+
+        //Button.waitForAnyPress();
+        
+        //kalman.filtroKalman();
+
         // arrumar valores de direita e esquerda (2880, 3050)
-        AStar aStar = new AStar(5, 2, 0, 23, kalman, 2350, 2350);
+        AStar aStar = new AStar(10, 3, 5, 26+10, kalman, 510, 510);
         
         aStar.run();
+<<<<<<< HEAD
         
 >>>>>>> 1ccb7074c1b985d65a243c9bc6eb5ac5c14ce65d
         Button.waitForAnyPress();
+=======
+        //aStar.teste(20);
+
+         Button.waitForAnyPress();
+    
+>>>>>>> 2ce1b31e152f16e5d702aea2ca05447e7fdde88b
     }
 }
