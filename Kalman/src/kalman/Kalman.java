@@ -24,7 +24,7 @@ public class Kalman {
 		Motor.B.setSpeed(100);
 	    Motor.C.setSpeed(100);
 	    
-	    UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S4);
+	    UltrasonicSensor ultrasom = new UltrasonicSensor(SensorPort.S3);
         init = ultrasom.getDistance();
 	    
 	    Motor.B.rotate(36000, true);
@@ -46,7 +46,7 @@ public class Kalman {
 	    		//System.out.println("Ultrassom:"+medUltrassom);
 	    		this.pos = medOdometro * this.w + (1-this.w) * medUltrassom;
 				//System.out.println(this.pos);
-			} while (pos < this.meta && Motor.B.isMoving());
+			} while (this.pos < this.meta && Motor.B.isMoving());
 
 	    Motor.B.stop();
 	    Motor.C.stop();
